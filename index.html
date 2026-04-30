@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Log de Treino</title>
+    <style>
+        :root { --primary: #2196F3; --danger: #ff4444; --bg: #f4f4f9; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; box-sizing: border-box; }
+        h2, h3 { color: #333; margin-top: 0; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { opacity: 0.9; }
+        .btn-google { background: #4285F4; margin-bottom: 20px; }
+        .filters { display: flex; gap: 5px; flex-wrap: wrap; margin: 15px 0; }
+        .filters button { width: auto; flex-grow: 1; padding: 8px; font-size: 12px; background: #607D8B; }
+        .registro { background: #fff; border: 1px solid #eee; border-left: 5px solid var(--primary); padding: 15px; border-radius: 8px; margin-bottom: 10px; position: relative; }
+        .registro small { color: #888; }
+        .actions { margin-top: 10px; display: flex; gap: 10px; }
+        .btn-edit { background: #ff9800; padding: 5px 10px; font-size: 12px; }
+        .btn-del { background: var(--danger); padding: 5px 10px; font-size: 12px; }
+        #authSection, #appSection { width: 100%; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Seção de Login -->
+        <div id="authSection">
+            <h2>Treino DB🏋️</h2>
+            <p>Faça login para salvar seus pesos com segurança.</p>
+            <button class="btn-google" onclick="login()">Entrar com Google</button>
+        </div>
+
+        <!-- Seção Principal App -->
+        <div id="appSection" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="userName">Olá!</h3>
+                <button onclick="logout()" style="width: auto; padding: 5px 10px; background: #999;">Sair</button>
+            </div>
+
+            <input type="hidden" id="treinoId">
+            <input type="text" id="exercicio" placeholder="Nome do Exercício">
+            <input type="number" id="peso" placeholder="Peso (kg)">
+            <select id="tagTreino">
+                <option value="Geral">Geral</option>
+                <option value="Perna">Treino de Perna</option>
+                <option value="Peito">Peito / Ombro</option>
+                <option value="Costas">Costas / Bíceps</option>
+            </select>
+            <button id="btnSalvar" onclick="salvarTreino()">Salvar Registro</button>
+
+            <hr>
+
+            <div class="filters">
+                <button onclick="filtrar('Todos')">Todos</button>
+                <button onclick="filtrar('Perna')">Perna</button>
+                <button onclick="filtrar('Peito')">Peito</button>
+                <button onclick="filtrar('Costas')">Costas</button>
+            </div>
+
+            <div id="historico"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // CONFIGURAÇÃO DO SEU FIREBASE (COPIE DO CONSOLE)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnDpmVOtspAe8Vvf4mmbdN-CQUyIzxMM0",
+            authDomain: "treino-db-62275.firebaseapp.com",
+            projectId: "treino-db-62275",
+            storageBucket: "treino-db-62275.firebasestorage.app",
+            messagingSenderId: "339409720980",
+            appId: "1:339409720980:web:a36f2ac276f217e9fe0681",
+            measurementId: "G-ZCVNR127LP"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        let userAtual = null;
+        let unsubscribe = null;
+
+        // --- AUTH LOGIC ---
+        window.login = () => signInWithPopup(auth, provider);
+        window.logout = () => signOut(auth);
+
+        onAuthStateChanged(auth, (user) => {
+            const authSection = document.getElementById('authSection');
+            const appSection = document.getElementById('appSection');
+            if (user) {
+                userAtual = user;
+                authSection.classList.add('hidden');
+                appSection.classList.remove('hidden');
+                document.getElementById('userName').innerText = `Olá, ${user.displayName.split(' ')[0]}!`;
+                filtrar('Todos');
+            } else {
+                userAtual = null;
+                authSection.classList.remove('hidden');
+                appSection.classList.add('hidden');
+                if (unsubscribe) unsubscribe();
+            }
+        });
+
+        // --- DATA LOGIC ---
+        window.salvarTreino = async () => {
+            const id = document.getElementById('treinoId').value;
+            const exercicio = document.getElementById('exercicio').value;
+            const peso = document.getElementById('peso').value;
+            const tag = document.getElementById('tagTreino').value;
+
+            if (!exercicio || !peso) return alert("Preencha os campos!");
+
+            const dados = {
+                exercicio,
+                peso: Number(peso),
+                tag,
+                userId: userAtual.uid,
+                data: new Date()
+            };
+
+            try {
+                if (id) {
+                    await updateDoc(doc(db, "treinos", id), { exercicio, peso: Number(peso), tag });
+                    document.getElementById('treinoId').value = '';
+                } else {
+                    await addDoc(collection(db, "treinos"), dados);
+                }
+                document.getElementById('exercicio').value = '';
+                document.getElementById('peso').value = '';
+                document.getElementById('btnSalvar').innerText = "Salvar Registro";
+            } catch (e) { console.error("Erro ao salvar: ", e); }
+        };
+
+        window.filtrar = (categoria) => {
+            if (!userAtual) return;
+            const pRef = collection(db, "treinos");
+            let q = query(pRef, where("userId", "==", userAtual.uid), orderBy("data", "desc"));
+            
+            if (categoria !== 'Todos') {
+                q = query(pRef, where("userId", "==", userAtual.uid), where("tag", "==", categoria), orderBy("data", "desc"));
+            }
+
+            if (unsubscribe) unsubscribe();
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                const lista = document.getElementById('historico');
+                lista.innerHTML = '';
+                snapshot.forEach((docSnap) => {
+                    const item = docSnap.data();
+                    const id = docSnap.id;
+                    lista.innerHTML += `
+                        <div class="registro" style="border-left-color: ${getCor(item.tag)}">
+                            <strong>${item.exercicio}</strong> - ${item.peso}kg <br>
+                            <small>${item.tag} | ${item.data?.toDate().toLocaleDateString()}</small>
+                            <div class="actions">
+                                <button class="btn-edit" onclick="prepararEdicao('${id}', '${item.exercicio}', ${item.peso}, '${item.tag}')">Editar</button>
+                                <button class="btn-del" onclick="excluirTreino('${id}')">Excluir</button>
+                            </div>
+                        </div>`;
+                });
+            });
+        };
+
+        window.prepararEdicao = (id, exercicio, peso, tag) => {
+            document.getElementById('treinoId').value = id;
+            document.getElementById('exercicio').value = exercicio;
+            document.getElementById('peso').value = peso;
+            document.getElementById('tagTreino').value = tag;
+            document.getElementById('btnSalvar').innerText = "Atualizar Registro";
+            window.scrollTo(0,0);
+        };
+
+        window.excluirTreino = async (id) => {
+            if(confirm("Excluir registro?")) await deleteDoc(doc(db, "treinos", id));
+        };
+
+        const getCor = (t) => {
+            return { 'Perna': '#4CAF50', 'Peito': '#2196F3', 'Costas': '#FF9800' }[t] || '#9E9E9E';
+        };
+    </script>
+</body>
+</html>
