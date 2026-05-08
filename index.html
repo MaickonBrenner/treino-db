@@ -29,7 +29,7 @@
     <div class="container">
         <!-- Seção de Login -->
         <div id="authSection">
-            <h2>Treino DB🏋️</h2>
+            <h2>💪🏼 Treino DB 🏋️</h2>
             <p>Faça login para salvar seus pesos com segurança.</p>
             <button class="btn-google" onclick="login()">Entrar com Google</button>
         </div>
@@ -46,9 +46,11 @@
             <input type="number" id="peso" placeholder="Peso (kg)">
             <select id="tagTreino">
                 <option value="Geral">Geral</option>
-                <option value="Perna">Treino de Perna</option>
-                <option value="Peito">Peito / Ombro</option>
-                <option value="Costas">Costas / Bíceps</option>
+                <option value="T1">T1 - Peito e Ombro</option>
+                <option value="T2">T2 - Quadríceps</option>
+                <option value="T3">T3 - Costas e Bíceps</option>
+                <option value="T4">T4 - Posterior</option>
+                <option value="T5">T5 - Glúteo/Peito</option>
             </select>
             <button id="btnSalvar" onclick="salvarTreino()">Salvar Registro</button>
 
@@ -56,9 +58,11 @@
 
             <div class="filters">
                 <button onclick="filtrar('Todos')">Todos</button>
-                <button onclick="filtrar('Perna')">Perna</button>
-                <button onclick="filtrar('Peito')">Peito</button>
-                <button onclick="filtrar('Costas')">Costas</button>
+                <button onclick="filtrar('T1')">T1</button>
+                <button onclick="filtrar('T2')">T2</button>
+                <button onclick="filtrar('T3')">T3</button>
+                <button onclick="filtrar('T4')">T4</button>
+                <button onclick="filtrar('T5')">T5</button>
             </div>
 
             <div id="historico"></div>
@@ -184,7 +188,14 @@
         };
 
         const getCor = (t) => {
-            return { 'Perna': '#4CAF50', 'Peito': '#2196F3', 'Costas': '#FF9800' }[t] || '#9E9E9E';
+            const paleta = {
+                'T1': '#4CAF50', // Verde
+                'T2': '#2196F3', // Azul
+                'T3': '#FF9800', // Laranja
+                'T4': '#E91E63', // Rosa/Pink
+                'T5': '#9C27B0'  // Roxo
+            };
+            return paleta[t] || '#9E9E9E'; // Cinza para 'Geral' ou outros
         };
     </script>
 </body>
