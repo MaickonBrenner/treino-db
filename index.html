@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Log de Treino</title>
+    <title>Meu Log de Treinos</title>
     <style>
         :root { --primary: #2196F3; --danger: #ff4444; --bg: #f4f4f9; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; box-sizing: border-box; }
         h2, h3 { color: #333; margin-top: 0; }
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .row { display: flex; gap: 10px; }
         button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
         button:hover { opacity: 0.9; }
         .btn-google { background: #4285F4; margin-bottom: 20px; }
@@ -27,14 +28,12 @@
 <body>
 
     <div class="container">
-        <!-- Seção de Login -->
         <div id="authSection">
             <h2>💪🏼 Treino DB 🏋️</h2>
-            <p>Faça login para salvar seus pesos com segurança.</p>
+            <p>Faça login para salvar seus pesos e repetições.</p>
             <button class="btn-google" onclick="login()">Entrar com Google</button>
         </div>
 
-        <!-- Seção Principal App -->
         <div id="appSection" class="hidden">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h3 id="userName">Olá!</h3>
@@ -43,7 +42,12 @@
 
             <input type="hidden" id="treinoId">
             <input type="text" id="exercicio" placeholder="Nome do Exercício">
-            <input type="number" id="peso" placeholder="Peso (kg)">
+            
+            <div class="row">
+                <input type="number" id="peso" placeholder="Peso (kg)">
+                <input type="number" id="repeticoes" placeholder="Reps">
+            </div>
+
             <select id="tagTreino">
                 <option value="Geral">Geral</option>
                 <option value="T1">T1 - Peito e Ombro</option>
@@ -69,13 +73,11 @@
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, updateDoc, deleteDoc, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // CONFIGURAÇÃO DO SEU FIREBASE (COPIE DO CONSOLE)
         const firebaseConfig = {
             apiKey: "AIzaSyBnDpmVOtspAe8Vvf4mmbdN-CQUyIzxMM0",
             authDomain: "treino-db-62275.firebaseapp.com",
@@ -94,7 +96,6 @@
         let userAtual = null;
         let unsubscribe = null;
 
-        // --- AUTH LOGIC ---
         window.login = () => signInWithPopup(auth, provider);
         window.logout = () => signOut(auth);
 
@@ -115,18 +116,19 @@
             }
         });
 
-        // --- DATA LOGIC ---
         window.salvarTreino = async () => {
             const id = document.getElementById('treinoId').value;
             const exercicio = document.getElementById('exercicio').value;
             const peso = document.getElementById('peso').value;
+            const repeticoes = document.getElementById('repeticoes').value;
             const tag = document.getElementById('tagTreino').value;
 
-            if (!exercicio || !peso) return alert("Preencha os campos!");
+            if (!exercicio || !peso || !repeticoes) return alert("Preencha todos os campos!");
 
             const dados = {
                 exercicio,
                 peso: Number(peso),
+                repeticoes: Number(repeticoes),
                 tag,
                 userId: userAtual.uid,
                 data: new Date()
@@ -134,13 +136,14 @@
 
             try {
                 if (id) {
-                    await updateDoc(doc(db, "treinos", id), { exercicio, peso: Number(peso), tag });
+                    await updateDoc(doc(db, "treinos", id), { exercicio, peso: Number(peso), repeticoes: Number(repeticoes), tag });
                     document.getElementById('treinoId').value = '';
                 } else {
                     await addDoc(collection(db, "treinos"), dados);
                 }
                 document.getElementById('exercicio').value = '';
                 document.getElementById('peso').value = '';
+                document.getElementById('repeticoes').value = '';
                 document.getElementById('btnSalvar').innerText = "Salvar Registro";
             } catch (e) { console.error("Erro ao salvar: ", e); }
         };
@@ -161,12 +164,14 @@
                 snapshot.forEach((docSnap) => {
                     const item = docSnap.data();
                     const id = docSnap.id;
+                    const repsText = item.repeticoes ? ` | ${item.repeticoes} reps` : '';
+                    
                     lista.innerHTML += `
                         <div class="registro" style="border-left-color: ${getCor(item.tag)}">
-                            <strong>${item.exercicio}</strong> - ${item.peso}kg <br>
+                            <strong>${item.exercicio}</strong> - ${item.peso}kg${repsText} <br>
                             <small>${item.tag} | ${item.data?.toDate().toLocaleDateString()}</small>
                             <div class="actions">
-                                <button class="btn-edit" onclick="prepararEdicao('${id}', '${item.exercicio}', ${item.peso}, '${item.tag}')">Editar</button>
+                                <button class="btn-edit" onclick="prepararEdicao('${id}', '${item.exercicio}', ${item.peso}, ${item.repeticoes || 0}, '${item.tag}')">Editar</button>
                                 <button class="btn-del" onclick="excluirTreino('${id}')">Excluir</button>
                             </div>
                         </div>`;
@@ -174,10 +179,11 @@
             });
         };
 
-        window.prepararEdicao = (id, exercicio, peso, tag) => {
+        window.prepararEdicao = (id, exercicio, peso, repeticoes, tag) => {
             document.getElementById('treinoId').value = id;
             document.getElementById('exercicio').value = exercicio;
             document.getElementById('peso').value = peso;
+            document.getElementById('repeticoes').value = repeticoes;
             document.getElementById('tagTreino').value = tag;
             document.getElementById('btnSalvar').innerText = "Atualizar Registro";
             window.scrollTo(0,0);
@@ -188,14 +194,8 @@
         };
 
         const getCor = (t) => {
-            const paleta = {
-                'T1': '#4CAF50', // Verde
-                'T2': '#2196F3', // Azul
-                'T3': '#FF9800', // Laranja
-                'T4': '#E91E63', // Rosa/Pink
-                'T5': '#9C27B0'  // Roxo
-            };
-            return paleta[t] || '#9E9E9E'; // Cinza para 'Geral' ou outros
+            const paleta = { 'T1': '#4CAF50', 'T2': '#2196F3', 'T3': '#FF9800', 'T4': '#E91E63', 'T5': '#9C27B0' };
+            return paleta[t] || '#9E9E9E';
         };
     </script>
 </body>
