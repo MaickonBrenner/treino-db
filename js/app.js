@@ -122,11 +122,11 @@ window.excluirTreino = async (id) => {
 
 const getCor = (t) => {
     const paleta = { 
-        'Geral': '#607D8B', 
+        'Geral': '#3c95c1', 
         'T1': '#4CAF50', 
         'T2': '#2196F3', 
-        'T3': '#FF9800', 
-        'T4': '#E91E63', 
+        'T3': '#e9e500', 
+        'T4': '#d50000', 
         'T5': '#9C27B0' 
     };
     return paleta[t] || '#9E9E9E';
