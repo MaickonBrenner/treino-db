@@ -1,0 +1,175 @@
+:root { 
+    --primary: #2196F3; 
+    --danger: #ff4444; 
+    --bg: #f4f4f9; 
+}
+
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    background: var(--bg); 
+    margin: 0; 
+    padding: 20px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+}
+
+.container { 
+    background: white; 
+    padding: 20px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+    width: 100%; 
+    max-width: 450px; 
+    box-sizing: border-box; 
+}
+
+h2, h3 { 
+    color: #333; 
+    margin-top: 0; 
+}
+
+input, select, button { 
+    width: 100%; 
+    padding: 12px; 
+    margin: 8px 0; 
+    border: 1px solid #ddd; 
+    border-radius: 8px; 
+    font-size: 16px; 
+    box-sizing: border-box; 
+}
+
+.row { 
+    display: flex; 
+    gap: 10px; 
+}
+
+button { 
+    background: var(--primary); 
+    color: white; 
+    border: none; 
+    font-weight: bold; 
+    cursor: pointer; 
+    transition: 0.3s; 
+}
+
+button:hover { 
+    opacity: 0.9; 
+}
+
+.btn-google { 
+    background: #4285F4; 
+    margin-bottom: 20px; 
+}
+
+/* Alinhamento ao centro da tela inicial e GIF Responsivo */
+.auth-center {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-center hr {
+    width: 100%;
+    margin: 10px 0;
+    border: 0;
+    border-top: 1px solid #eee;
+}
+
+.loading-text {
+    margin: 10px 0;
+    color: #666;
+}
+
+.load-gif {
+    max-width: 80px; /* Tamanho responsivo otimizado */
+    width: 100%;
+    height: auto;
+    margin-top: 10px;
+}
+
+/* Cabeçalho do App com o botão "Todos" e "Sair" alinhados */
+.app-header {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-todos-top {
+    width: auto !important; 
+    padding: 6px 12px !important; 
+    background: #607D8B !important;
+    font-size: 13px !important;
+    margin: 0 !important;
+}
+
+.btn-sair {
+    width: auto !important; 
+    padding: 6px 12px !important; 
+    background: #999 !important;
+    font-size: 13px !important;
+    margin: 0 !important;
+}
+
+.filters { 
+    display: flex; 
+    gap: 5px; 
+    flex-wrap: wrap; 
+    margin: 15px 0; 
+}
+
+.filters button { 
+    width: auto; 
+    flex-grow: 1; 
+    padding: 8px; 
+    font-size: 12px; 
+    background: #607D8B; 
+}
+
+.registro { 
+    background: #fff; 
+    border: 1px solid #eee; 
+    border-left: 5px solid var(--primary); 
+    padding: 15px; 
+    border-radius: 8px; 
+    margin-bottom: 10px; 
+    position: relative; 
+}
+
+.registro small { 
+    color: #888; 
+}
+
+.actions { 
+    margin-top: 10px; 
+    display: flex; 
+    gap: 10px; 
+}
+
+.btn-edit { 
+    background: #ff9800; 
+    padding: 5px 10px; 
+    font-size: 12px; 
+}
+
+.btn-del { 
+    background: var(--danger); 
+    padding: 5px 10px; 
+    font-size: 12px; 
+}
+
+#authSection, #appSection { 
+    width: 100%; 
+}
+
+.hidden { 
+    display: none; 
+}
